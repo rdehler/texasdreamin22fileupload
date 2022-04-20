@@ -1,0 +1,21 @@
+<template>
+    <div class="slds-card slds-align_absolute-center slds-grid_vertical">
+        <!-- option 1 -->
+        <lightning-button variant="brand" label="Take Screenshot" title="screenshot" onclick={generateScreenshot}></lightning-button>
+
+        <!-- option 2 -->
+        <div class="print-preview-div">
+            Take screenshot of this div.
+        </div>
+        
+        <div id="screenshotcanvas" class="screenshotcanvas">
+            <canvas class="my_canvas_id">
+            </canvas>
+        </div>
+
+        <img src={imgsrc} class="lightense"/>
+
+        <lightning-button variant="brand" label="Option 2" title="screenshot" onclick={printDiv}></lightning-button>
+    </div>
+
+</template>
