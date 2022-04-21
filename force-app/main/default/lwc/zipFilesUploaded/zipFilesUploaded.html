@@ -1,0 +1,41 @@
+<template>
+    <article class="slds-card">
+        <!-- header -->
+        <div class="slds-grid slds-einstein-header slds-card__header slds-card__header">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-grid slds-grid_vertical-align-center slds-size_3-of-4 slds-medium-size_2-of-3">
+                  <div class="slds-media__body">
+                    <h2 class="slds-truncate" title="Custom File Uploader">
+                        <span class="slds-text-heading_small slds-text-title_bold">Custom File Uploader</span>
+                    </h2>
+                  </div>
+                </div>
+                <div class="slds-einstein-header__figure slds-size_1-of-4 slds-medium-size_1-of-3"></div>
+            </header>
+        </div>
+        <!-- body -->
+        <div class="slds-card__body slds-card__body_inner slds-align_absolute-center slds-grid_vertical">
+            <lightning-input 
+                class="input-field slds-m-bottom_small"
+                type="file"
+                label="Test uploading files and then zip"
+                name="fileUploader"
+                onchange={handleFiles}
+                multiple>
+            </lightning-input>
+            <lightning-button 
+              variant="brand" 
+              label="Test zip with dummy data" 
+              title="testing jszip" 
+              onclick={test}>
+            </lightning-button>
+        </div>
+        <!-- footer -->
+        <footer class="slds-card__footer">
+          <!-- <a class="slds-card__footer-action" href="#">View All
+            <span class="slds-assistive-text">Einstein Recommendations</span>
+          </a> -->
+          footer content
+        </footer>
+      </article>
+</template>
