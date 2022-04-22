@@ -4,12 +4,15 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { loadScript, loadStyle } from 'lightning/platformResourceLoader';
 import D3 from '@salesforce/resourceUrl/d3';
 import DATA from './data';
+import SalesforceApi from 'c/salesforceApi';
+import getSessionId from '@salesforce/apex/UserSession.getSessionId';
 
 export default class D3screenshot extends LightningElement {
     svgWidth = 400;
     svgHeight = 400;
 
     d3Initialized = false;
+    baseUrl;
 
     renderedCallback() {
         if (this.d3Initialized) {
@@ -33,6 +36,11 @@ export default class D3screenshot extends LightningElement {
                     })
                 );
             });
+    }
+
+    connectedCallback(){
+        const subdomains = window.location.host.split('.');
+        this.baseUrl = subdomains[0];
     }
 
     initializeD3() {
@@ -122,42 +130,76 @@ export default class D3screenshot extends LightningElement {
     }
 
     screenshotData(){
-        console.log('hit screenshotData()');
-        // get svg tag
-        var svgElement = this.template.querySelector('svg');
-        console.log('svgElement');
-        console.log(svgElement);
+        console.log('screenshotData()');
+        // option 1
+
+        // const s = new XMLSerializer().serializeToString(this.template.querySelector('svg'));
+        // const encodedData = window.btoa(s);
+        // console.log(encodedData);
+        // var b64start = 'data:image/svg+xml;base64,';
+        // var image64 = b64start + encodedData;
+        // console.log(image64);
+        // // this.saveImageToServer(image64);
+
+        // var canvas = document.createElement("canvas");
+        // var context = canvas.getContext("2d");
+        // canvas.width = width;
+        // canvas.height = height;
+        // var image = new Image();
+        // image.onload = function() {
+        //     context.clearRect ( 0, 0, width, height );
+        //     context.drawImage(image, 0, 0, width, height);
+        //     canvas.toBlob( function(image64) {
+        //         var filesize = Math.round( image64.length/1024 ) + ' KB';
+        //         if ( callback ) callback( image64, filesize );
+        //     });
+        // };
+        // image.src = imgsrc;
+
+        // option 2
+
+        // const svgString = new XMLSerializer().serializeToString(this.template.querySelector('svg'));
+        // console.log(svgString); // contains all the NS attributes
+
+        // const blob = new Blob([svgString], { type: "image/svg+xml" });
+        // const img = new Image();
+        // img.src = URL.createObjectURL(blob);
+        // console.log(img.src);
+        // this.saveImageToServer(img.src);
+
+        // option 3
+        var svgElement = this.template.querySelector('svg.d3');
         let {width, height} = svgElement.getBBox();
         let clonedSvgElement = svgElement.cloneNode(true);
         let outerHTML = clonedSvgElement.outerHTML,
-            blobURL = new Blob([outerHTML],{type:'image/svg+xml;charset=utf-8'});
-        console.log('outerHTML');
-        console.log(outerHTML);
-        // create screenshot image
+            blobSvg = new Blob([outerHTML],{type:'image/svg+xml;charset=utf-8'});
+        console.log('blobSvg');
+        console.log(blobSvg);
+        console.log(window.location.href);
+        let URL = window.location.href;
+        let blobURL = URL.createObjectURL(blobSvg);
         console.log('blobURL');
         console.log(blobURL);
 
         let image = new Image();
         image.onload = () => {
             console.log('image onload');
-            let canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            let context = canvas.getContext('2d');
-            // draw image in canvas starting left-0 , top - 0  
-            context.drawImage(image, 0, 0, width, height );
-            //  downloadImage(canvas); need to implement
+           let canvas = document.createElement('canvas');
+           canvas.widht = width;
+           canvas.height = height;
+           let context = canvas.getContext('2d');
+           // draw image in canvas starting left-0 , top - 0  
+           context.drawImage(image, 0, 0, width, height );
+          //  downloadImage(canvas); need to implement
         };
         image.src = blobURL;
-        // donwload canvas as image
+        console.log('blobURL');
+        console.log(blobURL);
         let png = canvas.toDataURL(); // default png
-        let jpeg = canvas.toDataURL('image/jpg');
-        let webp = canvas.toDataURL('image/webp');
-
-        console.log('png');
-        console.log(png);
-
-        this.download(png, "image.png");
+        this.saveImageToServer(blobURL);
+       
+        // this.saveImageToServer(blobURL);
+        // this.download(png, "image.png");
     }
 
     download(href, name) {
@@ -171,4 +213,40 @@ export default class D3screenshot extends LightningElement {
         link.remove();
     }
       
+
+    saveImageToServer(blobURL) {
+        console.log('saveImageToServer()');
+        // this.updateTextLoading = 'Saving to PDF to Annual File';
+        // create file name
+        const dateNow = new Date().toLocaleDateString();
+        const docName = 'd3Data' + '_' + dateNow;
+
+        // create contentDocument for payload
+        const contentDocument = {
+            Title: docName,
+            PathOnClient: '.png'
+            // FirstPublishLocationId: this.recordId
+        };
+        // retrieve session id for payload
+        getSessionId()
+            .then(id => {
+                const sessionId = id;
+                try {
+                    const api = new SalesforceApi(`https://${this.baseUrl}.cs41.my.salesforce.com`, 'v46.0', sessionId);
+                    api.createBlob('ContentVersion', contentDocument, docName, 'VersionData', blobURL, (res) => {
+                        console.log('Image Saved!', res);
+                        console.log(res.id);
+                    })
+                } catch (error) {
+                    console.error('Bad API Request, check company storage', error);
+                    // this.updateText = 'Check Storage';
+                    // this.isLoading = false;
+                }
+            })
+            .catch(error => {
+                console.error('getSessionId error', error);
+                // this.updateText = 'getSessionId error';
+                // this.isLoading = false;
+            });
+    }
 }
