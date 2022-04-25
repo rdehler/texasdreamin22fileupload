@@ -22,7 +22,7 @@ export default class D3screenshot extends LightningElement {
 
         Promise.all([
             loadScript(this, D3 + '/d3.js'),
-            loadStyle(this, D3 + '/style.css')
+            //loadStyle(this, D3 + '/style.css')
         ])
             .then(() => {
                 this.initializeD3();
@@ -131,75 +131,19 @@ export default class D3screenshot extends LightningElement {
 
     screenshotData(){
         console.log('screenshotData()');
-        // option 1
 
-        // const s = new XMLSerializer().serializeToString(this.template.querySelector('svg'));
-        // const encodedData = window.btoa(s);
-        // console.log(encodedData);
-        // var b64start = 'data:image/svg+xml;base64,';
-        // var image64 = b64start + encodedData;
-        // console.log(image64);
-        // // this.saveImageToServer(image64);
-
-        // var canvas = document.createElement("canvas");
-        // var context = canvas.getContext("2d");
-        // canvas.width = width;
-        // canvas.height = height;
-        // var image = new Image();
-        // image.onload = function() {
-        //     context.clearRect ( 0, 0, width, height );
-        //     context.drawImage(image, 0, 0, width, height);
-        //     canvas.toBlob( function(image64) {
-        //         var filesize = Math.round( image64.length/1024 ) + ' KB';
-        //         if ( callback ) callback( image64, filesize );
-        //     });
-        // };
-        // image.src = imgsrc;
-
-        // option 2
-
-        // const svgString = new XMLSerializer().serializeToString(this.template.querySelector('svg'));
-        // console.log(svgString); // contains all the NS attributes
-
-        // const blob = new Blob([svgString], { type: "image/svg+xml" });
-        // const img = new Image();
-        // img.src = URL.createObjectURL(blob);
-        // console.log(img.src);
-        // this.saveImageToServer(img.src);
-
-        // option 3
         var svgElement = this.template.querySelector('svg.d3');
         let {width, height} = svgElement.getBBox();
         let clonedSvgElement = svgElement.cloneNode(true);
-        let outerHTML = clonedSvgElement.outerHTML,
-            blobSvg = new Blob([outerHTML],{type:'image/svg+xml;charset=utf-8'});
-        console.log('blobSvg');
-        console.log(blobSvg);
-        console.log(window.location.href);
-        let URL = window.location.href;
-        let blobURL = URL.createObjectURL(blobSvg);
-        console.log('blobURL');
-        console.log(blobURL);
+        let outerHTML = clonedSvgElement.outerHTML;
+        // need to add xmlns="http://www.w3.org/2000/svg" so that it displays as image instead of xml
+        outerHTML = outerHTML.substring(0,5) + 'xmlns="http://www.w3.org/2000/svg" ' + outerHTML.substring(5, outerHTML.length);
 
-        let image = new Image();
-        image.onload = () => {
-            console.log('image onload');
-           let canvas = document.createElement('canvas');
-           canvas.widht = width;
-           canvas.height = height;
-           let context = canvas.getContext('2d');
-           // draw image in canvas starting left-0 , top - 0  
-           context.drawImage(image, 0, 0, width, height );
-          //  downloadImage(canvas); need to implement
-        };
-        image.src = blobURL;
-        console.log('blobURL');
-        console.log(blobURL);
-        let png = canvas.toDataURL(); // default png
-        this.saveImageToServer(blobURL);
-       
-        // this.saveImageToServer(blobURL);
-        // this.download(png, "image.png");
+        var svgBlob = new Blob([outerHTML], {type:"image/svg+xml;charset=utf-8"});
+        console.log('blob:',svgBlob);
+
+        this.saveImageToServer(svgBlob);
+
     }
 
     download(href, name) {
@@ -216,7 +160,6 @@ export default class D3screenshot extends LightningElement {
 
     saveImageToServer(blobURL) {
         console.log('saveImageToServer()');
-        // this.updateTextLoading = 'Saving to PDF to Annual File';
         // create file name
         const dateNow = new Date().toLocaleDateString();
         const docName = 'd3Data' + '_' + dateNow;
@@ -224,8 +167,7 @@ export default class D3screenshot extends LightningElement {
         // create contentDocument for payload
         const contentDocument = {
             Title: docName,
-            PathOnClient: '.png'
-            // FirstPublishLocationId: this.recordId
+            PathOnClient: '.svg'
         };
         // retrieve session id for payload
         getSessionId()
@@ -238,15 +180,11 @@ export default class D3screenshot extends LightningElement {
                         console.log(res.id);
                     })
                 } catch (error) {
-                    console.error('Bad API Request, check company storage', error);
-                    // this.updateText = 'Check Storage';
-                    // this.isLoading = false;
+                    console.error('Bad API Request, check storage?', error);
                 }
             })
             .catch(error => {
                 console.error('getSessionId error', error);
-                // this.updateText = 'getSessionId error';
-                // this.isLoading = false;
             });
     }
 }
