@@ -1,0 +1,16 @@
+.d3{
+    margin-bottom: -40px;
+}
+
+.slds-notify{
+    --slds-c-alert-color-background: #0176d3;
+}
+
+svg.d3 .links line {
+    stroke: rgb(221, 219, 218);
+}
+
+svg.d3 .nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+}
